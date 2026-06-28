@@ -1,0 +1,16 @@
+# VSCode
+.vscode
+.classpath
+.project
+.settings
+
+# User-specific stuff:
+.idea/
+
+## File-based project format:
+*.iws
+*.iml
+
+### Gradle template
+.gradle
+build/

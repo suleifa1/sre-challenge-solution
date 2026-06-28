@@ -1,0 +1,7 @@
+apiVersion: v2
+name: kafka
+description: Apache Kafka for SRE Challenge
+type: application
+version: 0.1.0
+appVersion: "3.7.0"
+icon: https://helm.sh/img/helm.svg

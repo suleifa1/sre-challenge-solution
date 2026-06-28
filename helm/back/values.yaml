@@ -1,0 +1,30 @@
+namespace: demo-back
+
+app:
+  name: back
+  port: 8082
+  managementPort: 8081
+  image: back:0.1.0
+  imagePullPolicy: Never
+  replicaCount: 1
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      cpu: 500m
+      memory: 768Mi
+
+database:
+  username: postgres
+  password: postgres123
+  database: postgres
+
+dependencies:
+  postgres:
+    host: postgresql.postgres.svc.cluster.local
+    port: 5432
+  kafka:
+    host: kafka.kafka.svc.cluster.local
+    port: 9092

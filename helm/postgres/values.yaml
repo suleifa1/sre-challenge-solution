@@ -1,0 +1,20 @@
+namespace: postgres
+
+postgres:
+  image: postgres:16
+  port: 5432
+  username: postgres
+  password: postgres123
+  database: postgres
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 300m
+      memory: 512Mi
+
+  persistence:
+    enabled: false
+    size: 10Gi

@@ -1,0 +1,7 @@
+apiVersion: v2
+name: postgres
+description: PostgreSQL database for SRE Challenge
+type: application
+version: 0.1.0
+appVersion: "16"
+icon: https://helm.sh/img/helm.svg

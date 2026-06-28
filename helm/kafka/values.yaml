@@ -1,0 +1,19 @@
+namespace: kafka
+
+kafka:
+  image: apache/kafka:3.7.0
+  port: 9092
+  brokers: 1
+
+  resources:
+    requests:
+      cpu: 200m
+      memory: 512Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+
+topics:
+    name: testCommand
+    partitions: 32
+    replication: 1

@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.app.name }}-config
+  namespace: {{ .Values.namespace }}
+data:
+  application.yaml: |
+    server:
+      port: {{ .Values.app.port }}
+    spring:
+      kafka:
+        bootstrap-servers: "{{ .Values.dependencies.kafka.host }}:{{ .Values.dependencies.kafka.port }}"
+        consumer:
+          group-id: "back-group"
+          key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+          value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+          properties.spring.json.trusted.packages: "*"
+      datasource:
+        url: jdbc:postgresql://{{ .Values.dependencies.postgres.host }}:{{ .Values.dependencies.postgres.port }}/{{ .Values.database.database }}
+        driverClassName: org.postgresql.Driver
+      jpa:
+        hibernate:
+          ddl-auto: update
+    management:
+      server:
+        port: {{ .Values.app.managementPort }}
+        address: 0.0.0.0
+      endpoints:
+        web:
+          base-path: /
+          exposure:
+            include: health,info,metrics

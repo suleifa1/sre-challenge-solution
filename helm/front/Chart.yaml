@@ -1,0 +1,7 @@
+apiVersion: v2
+name: front
+description: Frontend service for SRE Challenge
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+icon: https://helm.sh/img/helm.svg

@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: kafka
+spec:
+  replicas: {{ .Values.kafka.brokers }}
+  selector:
+    matchLabels:
+      app: kafka
+  template:
+    metadata:
+      labels:
+        app: kafka
+    spec:
+      containers:
+      - name: kafka
+        image: {{ .Values.kafka.image }}
+        ports:
+        - containerPort: {{ .Values.kafka.port }}
+          name: kafka
+        envFrom:
+        - configMapRef:
+            name: kafka-config
+        resources:
+          requests:
+            cpu: {{ .Values.kafka.resources.requests.cpu }}
+            memory: {{ .Values.kafka.resources.requests.memory }}
+          limits:
+            cpu: {{ .Values.kafka.resources.limits.cpu }}
+            memory: {{ .Values.kafka.resources.limits.memory }}
+
+        livenessProbe:
+          tcpSocket:
+            port: {{ .Values.kafka.port }}
+          initialDelaySeconds: 30
+          periodSeconds: 10
+
+        readinessProbe:
+          tcpSocket:
+            port: {{ .Values.kafka.port }}
+          initialDelaySeconds: 10
+          periodSeconds: 5

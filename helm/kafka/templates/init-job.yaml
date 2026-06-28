@@ -1,0 +1,36 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kafka-init
+  namespace: {{ .Values.namespace }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "1"
+    "helm.sh/hook-delete-policy": before-hook-creation
+spec:
+  backoffLimit: 5
+  template:
+    metadata:
+      labels:
+        app: kafka-init
+    spec:
+      restartPolicy: Never
+      initContainers:
+      - name: wait-for-kafka
+        image: busybox:1.35
+        command: ['sh', '-c', 'until nc -z kafka.{{ .Values.namespace }} {{ .Values.kafka.port }}; do echo waiting for kafka; sleep 2; done']
+
+      containers:
+      - name: kafka-topics
+        image: {{ .Values.kafka.image }}
+        command:
+        - /bin/bash
+        - -c
+        - |
+          /opt/kafka/bin/kafka-topics.sh \
+            --bootstrap-server kafka.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.kafka.port }} \
+            --create \
+            --topic {{ .Values.topics.name }} \
+            --partitions {{ .Values.topics.partitions }} \
+            --replication-factor {{ .Values.topics.replication }} \
+            --if-not-exists

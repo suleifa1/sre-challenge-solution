@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgresql
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: postgresql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgresql
+  template:
+    metadata:
+      labels:
+        app: postgresql
+    spec:
+      containers:
+      - name: postgresql
+        image: {{ .Values.postgres.image }}
+        ports:
+        - containerPort: {{ .Values.postgres.port }}
+          name: postgres
+        env:
+        - name: POSTGRES_USER
+          value: {{ .Values.postgres.username }}
+        - name: POSTGRES_PASSWORD
+          value: {{ .Values.postgres.password }}
+        - name: POSTGRES_DB
+          value: {{ .Values.postgres.database }}
+
+        resources:
+          requests:
+            cpu: {{ .Values.postgres.resources.requests.cpu }}
+            memory: {{ .Values.postgres.resources.requests.memory }}
+          limits:
+            cpu: {{ .Values.postgres.resources.limits.cpu }}
+            memory: {{ .Values.postgres.resources.limits.memory }}
+
+        livenessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - pg_isready -U {{ .Values.postgres.username }}
+          initialDelaySeconds: 30
+          periodSeconds: 10
+
+        readinessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - pg_isready -U {{ .Values.postgres.username }}
+          initialDelaySeconds: 10
+          periodSeconds: 5

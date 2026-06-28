@@ -1,0 +1,26 @@
+namespace: demo-front
+
+app:
+  name: front
+  port: 8080
+  managementPort: 8081
+  image: front:0.1.0
+  imagePullPolicy: Never
+  replicaCount: 1
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      cpu: 500m
+      memory: 768Mi
+
+dependencies:
+  kafka:
+    host: kafka.kafka.svc.cluster.local
+    port: 9092
+
+ingress:
+  enabled: true
+  hostname: front.local
