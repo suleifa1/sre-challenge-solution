@@ -113,7 +113,7 @@ Recommended set of changes for deployment in production environment:
 2. **ImagePullPolicy**: change from `Never` to `IfNotPresent` in `helm/*/values.yaml`
 3. **Authentication**: add `imagePullSecrets` to Deployment if necessary
 4. **CI/CD pipeline**: integrate image building and pushing to registry
-5. **Network access**: Ingress (current solution) is marked as deprecated since Kubernetes 1.19. Migration to Gateway API using HTTPRoute is recommended for compatibility with future K8s versions. Requires Gateway API CRD and controller presence in the cluster.
+5. **Network access**: Ingress NGINX is used for local development (built into Minikube). Note: Ingress NGINX was retired by SIG Network in March 2026 — migration to Gateway API (HTTPRoute) is recommended for production.
 
 ## Network Access
 
