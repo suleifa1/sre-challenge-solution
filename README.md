@@ -215,4 +215,3 @@ PostgreSQL and Kafka do not require horizontal scaling in the context of this so
 ```
 
 The script removes all Helm releases and namespaces.
-
