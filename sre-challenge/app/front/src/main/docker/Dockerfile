@@ -22,4 +22,7 @@ FROM ibm-semeru-runtimes:open-21-jre
 ARG JAR_VERSION=0.1.0
 COPY --from=builder /build/app/front/build/libs/front-${JAR_VERSION}.jar /app.jar
 
+RUN groupadd -r appuser && useradd -r -g appuser appuser
+USER appuser
+
 ENTRYPOINT ["java", "-Djava.security.egd=file:/dev/./urandom", "-jar", "/app.jar"]

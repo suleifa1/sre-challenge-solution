@@ -15,18 +15,15 @@ spec:
       labels:
         app: {{ .Values.app.name }}
     spec:
+      {{- include "app.podSecurityContext" . | nindent 6 }}
       initContainers:
-      - name: wait-for-postgres
-        image: busybox:1.35
-        command: ['sh', '-c', 'until nc -z {{ .Values.dependencies.postgres.host }} {{ .Values.dependencies.postgres.port }}; do echo waiting for postgres; sleep 2; done']
-      - name: wait-for-back
-        image: busybox:1.35
-        command: ['sh', '-c', 'until nc -z {{ .Values.dependencies.back.host }} {{ .Values.dependencies.back.port }}; do echo waiting for back to create schema; sleep 2; done']
-
+        {{- include "app.waitForPostgres" . | nindent 8 }}
+        {{- include "app.waitForBack" . | nindent 8 }}
       containers:
       - name: {{ .Values.app.name }}
         image: "{{ .Values.app.image }}"
         imagePullPolicy: {{ .Values.app.imagePullPolicy }}
+        {{- include "app.containerSecurityContext" . | nindent 8 }}
         ports:
         - name: http
           containerPort: {{ .Values.app.port }}
@@ -49,20 +46,29 @@ spec:
         - name: config
           mountPath: /config
           readOnly: true
+        - name: tmp 
+          mountPath: /tmp
+
+        startupProbe:
+          httpGet:
+            path: /health
+            port: management
+          failureThreshold: 30
+          periodSeconds: 15
 
         livenessProbe:
           httpGet:
             path: /health
             port: management
-          initialDelaySeconds: 30
           periodSeconds: 10
+          failureThreshold: 3
 
         readinessProbe:
           httpGet:
             path: /health
             port: management
-          initialDelaySeconds: 20
           periodSeconds: 5
+          failureThreshold: 3
 
         resources:
           requests:
@@ -79,3 +85,5 @@ spec:
       - name: config
         configMap:
           name: {{ .Values.app.name }}-config
+      - name: tmp
+        emptyDir: {}
