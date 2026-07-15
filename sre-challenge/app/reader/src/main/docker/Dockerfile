@@ -16,7 +16,7 @@ RUN ./gradlew :app:reader:build -x test --no-daemon
 
 # ==========STAGE 2: Run the app ==============
 
-FROM ibm-semeru-runtimes:open-21-jre
+FROM ibm-semeru-runtimes:open-21.0.11.0-jre-jammy
 
 ARG JAR_VERSION=0.1.0
 

@@ -17,7 +17,7 @@ RUN ./gradlew :app:front:build -x test --no-daemon
 # ==========STAGE 2: Run the app ==============
 
 
-FROM ibm-semeru-runtimes:open-21-jre
+FROM ibm-semeru-runtimes:open-21.0.11.0-jre-jammy
 
 ARG JAR_VERSION=0.1.0
 COPY --from=builder /build/app/front/build/libs/front-${JAR_VERSION}.jar /app.jar
