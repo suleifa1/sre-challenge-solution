@@ -1,11 +1,12 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: postgresql
   namespace: {{ .Values.namespace }}
   labels:
     app: postgresql
 spec:
+  serviceName: postgresql
   replicas: 1
   selector:
     matchLabels:
@@ -23,12 +24,22 @@ spec:
           name: postgres
         env:
         - name: POSTGRES_USER
-          value: {{ .Values.postgres.username }}
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: username
         - name: POSTGRES_PASSWORD
-          value: {{ .Values.postgres.password }}
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: password
         - name: POSTGRES_DB
           value: {{ .Values.postgres.database }}
-
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
+        volumeMounts:
+        - name: postgres-data
+          mountPath: /var/lib/postgresql/data
         resources:
           requests:
             cpu: {{ .Values.postgres.resources.requests.cpu }}
@@ -36,21 +47,27 @@ spec:
           limits:
             cpu: {{ .Values.postgres.resources.limits.cpu }}
             memory: {{ .Values.postgres.resources.limits.memory }}
-
         livenessProbe:
           exec:
             command:
             - /bin/sh
             - -c
-            - pg_isready -U {{ .Values.postgres.username }}
+            - pg_isready -U {{ .Values.postgres.auth.username }}
           initialDelaySeconds: 30
           periodSeconds: 10
-
         readinessProbe:
           exec:
             command:
             - /bin/sh
             - -c
-            - pg_isready -U {{ .Values.postgres.username }}
+            - pg_isready -U {{ .Values.postgres.auth.username }}
           initialDelaySeconds: 10
           periodSeconds: 5
+  volumeClaimTemplates:
+  - metadata:
+      name: postgres-data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: {{ .Values.postgres.persistence.size }}

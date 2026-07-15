@@ -1,0 +1,44 @@
+{{- if .Values.networkPolicy.enabled }}
+---
+# first deny all 
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny
+  namespace: {{ .Values.namespace }}
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+---
+# allow only things we want 
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: kafka-ingress
+  namespace: {{ .Values.namespace }}
+spec:
+  podSelector:
+    matchLabels:
+      app: kafka
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: {{ .Values.dependencies.front.namespace }}
+      podSelector:
+        matchLabels:
+          app: front
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: {{ .Values.dependencies.back.namespace }}
+      podSelector:
+        matchLabels:
+          app: back
+    ports:
+    - port: {{ .Values.kafka.port }}
+      protocol: TCP
+{{- end }}

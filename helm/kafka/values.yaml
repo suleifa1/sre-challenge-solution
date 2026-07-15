@@ -12,8 +12,28 @@ kafka:
     limits:
       cpu: 500m
       memory: 1Gi
+  
+  persistence:
+    size: 5Gi
+  
+  nodeId: 1
+  clusterId: "5L6g3nShT-eMCtK--X86sw"
+  replicationFactor: 1
+  minIsr: 1
 
 topics:
     name: testCommand
     partitions: 32
     replication: 1
+
+
+# network section 
+
+networkPolicy:
+  enabled: false
+
+dependencies:
+  front:
+    namespace: demo-front
+  back:
+    namespace: demo-back

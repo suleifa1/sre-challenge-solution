@@ -3,9 +3,11 @@ namespace: postgres
 postgres:
   image: postgres:16
   port: 5432
-  username: postgres
-  password: postgres123
   database: postgres
+
+  auth:
+    username: postgres
+    password: postgres123
 
   resources:
     requests:
@@ -16,5 +18,13 @@ postgres:
       memory: 512Mi
 
   persistence:
-    enabled: false
-    size: 10Gi
+    size: 5Gi
+
+networkPolicy:
+  enabled: false
+
+dependencies:
+  back:
+    namespace: demo-back
+  reader:
+    namespace: demo-reader

@@ -1,0 +1,44 @@
+{{- if .Values.networkPolicy.enabled }}
+---
+# deny all firstly
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny
+  namespace: {{ .Values.namespace }}
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+---
+# allow what we want
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: postgres-ingress
+  namespace: {{ .Values.namespace }}
+spec:
+  podSelector:
+    matchLabels:
+      app: postgresql
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: {{ .Values.dependencies.back.namespace }}
+      podSelector:
+        matchLabels:
+          app: back
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: {{ .Values.dependencies.reader.namespace }}
+      podSelector:
+        matchLabels:
+          app: reader
+    ports:
+    - port: {{ .Values.postgres.port }}
+      protocol: TCP
+{{- end }}

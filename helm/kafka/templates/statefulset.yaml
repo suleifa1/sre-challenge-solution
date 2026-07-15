@@ -1,11 +1,12 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: kafka
   namespace: {{ .Values.namespace }}
   labels:
     app: kafka
 spec:
+  serviceName: kafka
   replicas: {{ .Values.kafka.brokers }}
   selector:
     matchLabels:
@@ -21,9 +22,14 @@ spec:
         ports:
         - containerPort: {{ .Values.kafka.port }}
           name: kafka
+        - containerPort: 9093
+          name: controller
         envFrom:
         - configMapRef:
             name: kafka-config
+        volumeMounts:
+        - name: kafka-data
+          mountPath: /var/kafka-logs
         resources:
           requests:
             cpu: {{ .Values.kafka.resources.requests.cpu }}
@@ -31,15 +37,21 @@ spec:
           limits:
             cpu: {{ .Values.kafka.resources.limits.cpu }}
             memory: {{ .Values.kafka.resources.limits.memory }}
-
         livenessProbe:
           tcpSocket:
             port: {{ .Values.kafka.port }}
           initialDelaySeconds: 30
           periodSeconds: 10
-
         readinessProbe:
           tcpSocket:
             port: {{ .Values.kafka.port }}
           initialDelaySeconds: 10
           periodSeconds: 5
+  volumeClaimTemplates:
+  - metadata:
+      name: kafka-data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: {{ .Values.kafka.persistence.size }}

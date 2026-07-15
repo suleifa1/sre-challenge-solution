@@ -31,4 +31,5 @@ dependencies:
 
 ingress:
   enabled: true
+  className: nginx
   hostname: reader.local

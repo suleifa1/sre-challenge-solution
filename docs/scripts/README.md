@@ -52,8 +52,3 @@ This section contains documentation for each deployment and testing script.
 
 See the "Possible errors" section in documentation for each script.
 
-## Additional Information
-
-- **SOLUTION.md** — general description of architecture and solution
-- **DEPLOYMENT.md** — detailed deployment information
-- **CI_PIPELINE.md** — CI/CD pipeline information
