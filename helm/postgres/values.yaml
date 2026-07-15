@@ -6,8 +6,8 @@ postgres:
   database: postgres
 
   auth:
-    username: postgres
-    password: postgres123
+    username: ""
+    password: ""
 
   resources:
     requests:

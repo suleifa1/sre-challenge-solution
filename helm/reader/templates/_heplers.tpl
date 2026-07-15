@@ -25,6 +25,13 @@ securityContext:
     capabilities:
       drop:
         - ALL
+  resources:
+    requests:
+      cpu: 50m
+      memory: 32Mi
+    limits:
+      cpu: 100m
+      memory: 64Mi
   command:
     - sh
     - -c

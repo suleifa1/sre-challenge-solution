@@ -18,17 +18,44 @@ spec:
       initContainers:
       - name: wait-for-kafka
         image: busybox:1.35
-        command: ['sh', '-c', 'until nc -z kafka.{{ .Values.namespace }} {{ .Values.kafka.port }}; do echo waiting for kafka; sleep 2; done']
-
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
+        resources:
+          requests:
+            cpu: 50m
+            memory: 32Mi
+          limits:
+            cpu: 100m
+            memory: 64Mi
+        command:
+          - sh
+          - -c
+          - until nc -z kafka {{ .Values.kafka.port }}; do echo waiting for kafka; sleep 2; done
       containers:
       - name: kafka-topics
         image: {{ .Values.kafka.image }}
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 200m
+            memory: 512Mi
         command:
         - /bin/bash
         - -c
         - |
           /opt/kafka/bin/kafka-topics.sh \
-            --bootstrap-server kafka.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.kafka.port }} \
+            --bootstrap-server kafka:{{ .Values.kafka.port }} \
             --create \
             --topic {{ .Values.topics.name }} \
             --partitions {{ .Values.topics.partitions }} \

@@ -16,9 +16,18 @@ spec:
       labels:
         app: kafka
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
       containers:
       - name: kafka
         image: {{ .Values.kafka.image }}
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
         ports:
         - containerPort: {{ .Values.kafka.port }}
           name: kafka
@@ -30,6 +39,8 @@ spec:
         volumeMounts:
         - name: kafka-data
           mountPath: /var/kafka-logs
+        - name: tmp
+          mountPath: /tmp
         resources:
           requests:
             cpu: {{ .Values.kafka.resources.requests.cpu }}
@@ -47,6 +58,10 @@ spec:
             port: {{ .Values.kafka.port }}
           initialDelaySeconds: 10
           periodSeconds: 5
+      volumes:
+      - name: tmp
+        emptyDir: {}
+
   volumeClaimTemplates:
   - metadata:
       name: kafka-data

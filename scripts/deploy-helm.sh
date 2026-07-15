@@ -5,6 +5,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 HELM_DIR="$PROJECT_DIR/helm"
 
+: ${DB_USERNAME:?DB_USERNAME is required. Export it before running.}
+: ${DB_PASSWORD:?DB_PASSWORD is required. Export it before running.}
+
 echo "Linting Helm charts"
 helm lint "$HELM_DIR"/*
 echo "All charts passed linting"
@@ -24,18 +27,26 @@ for entry in "${ORDER[@]}"; do
   chart="${entry%%:*}"
   ns="${entry##*:}"
   echo "Deploying $chart → namespace: $ns"
-  helm upgrade --install "$chart" "$HELM_DIR/$chart" \
-    --namespace "$ns" \
-    --create-namespace
-  echo "$chart deployed"
+
+  if [ "$chart" = "postgres" ]; then
+    helm upgrade --install "$chart" "$HELM_DIR/$chart" \
+      --namespace "$ns" \
+      --create-namespace \
+      --set postgres.auth.username="$DB_USERNAME" \
+      --set postgres.auth.password="$DB_PASSWORD"
+  else
+    helm upgrade --install "$chart" "$HELM_DIR/$chart" \
+      --namespace "$ns" \
+      --create-namespace \
+      --set database.username="$DB_USERNAME" \
+      --set database.password="$DB_PASSWORD"
+  fi
+
+  echo "✅ $chart deployed"
   echo ""
 done
 
 echo "Check status:"
 echo "  kubectl get pods -A"
 echo "Cleanup:"
-echo "  helm uninstall reader -n demo-reader && \\"
-echo "  helm uninstall front -n demo-front && \\"
-echo "  helm uninstall back -n demo-back && \\"
-echo "  helm uninstall kafka -n kafka && \\"
-echo "  helm uninstall postgres -n postgres"
+echo "  ./scripts/teardown.sh"

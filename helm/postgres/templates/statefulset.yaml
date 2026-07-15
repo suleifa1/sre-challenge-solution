@@ -16,9 +16,18 @@ spec:
       labels:
         app: postgresql
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        fsGroup: 999
       containers:
       - name: postgresql
         image: {{ .Values.postgres.image }}
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
         ports:
         - containerPort: {{ .Values.postgres.port }}
           name: postgres

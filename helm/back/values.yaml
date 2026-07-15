@@ -17,8 +17,8 @@ app:
       memory: 768Mi
 
 database:
-  username: postgres
-  password: postgres123
+  username: ""
+  password: ""
   database: postgres
 
 dependencies:
