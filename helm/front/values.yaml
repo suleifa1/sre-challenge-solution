@@ -22,6 +22,9 @@ dependencies:
     host: kafka.kafka.svc.cluster.local
     port: 9092
 
+networkPolicy:
+  enabled: true
+
 ingress:
   enabled: true
   className: nginx

@@ -38,7 +38,61 @@ spec:
       podSelector:
         matchLabels:
           app: back
+    - podSelector:
+        matchLabels:
+          app: kafka-init
     ports:
     - port: {{ .Values.kafka.port }}
       protocol: TCP
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: kafka-egress
+  namespace: {{ .Values.namespace }}
+spec:
+  podSelector:
+    matchLabels:
+      app: kafka
+  policyTypes:
+  - Egress
+  egress:
+  - ports:
+    - port: 53
+      protocol: UDP
+    - port: 53
+      protocol: TCP
+  - to:
+    - podSelector:
+        matchLabels:
+          app: kafka
+    ports:
+    - port: {{ .Values.kafka.port }}
+    - port: 9093 
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: kafka-init-egress
+  namespace: {{ .Values.namespace }}
+spec:
+  podSelector:
+    matchLabels:
+      app: kafka-init
+  policyTypes:
+  - Egress
+  egress:
+  - ports:
+    - port: 53
+      protocol: UDP
+    - port: 53
+      protocol: TCP
+  - to:
+    - podSelector:
+        matchLabels:
+          app: kafka
+    ports:
+    - port: {{ .Values.kafka.port }}   
+    
 {{- end }}

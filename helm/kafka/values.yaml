@@ -26,11 +26,8 @@ topics:
     partitions: 32
     replication: 1
 
-
-# network section 
-
 networkPolicy:
-  enabled: false
+  enabled: true
 
 dependencies:
   front:

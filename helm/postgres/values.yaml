@@ -21,7 +21,7 @@ postgres:
     size: 5Gi
 
 networkPolicy:
-  enabled: false
+  enabled: true
 
 dependencies:
   back:

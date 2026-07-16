@@ -22,6 +22,9 @@ database:
   password: ""
   database: postgres
 
+networkPolicy:
+  enabled: true
+
 dependencies:
   postgres:
     host: postgresql.postgres.svc.cluster.local

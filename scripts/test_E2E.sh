@@ -12,8 +12,10 @@ trap cleanup EXIT
 check() {
   local description=$1
   local command=$2
-  if ! eval "$command" > /dev/null 2>&1; then
-    echo "❌ $description"
+  if eval "$command" > /dev/null 2>&1; then
+    echo "✅ $description passed"
+  else
+    echo "❌ $description failed"
     eval "$command"
     exit 1
   fi

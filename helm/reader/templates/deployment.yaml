@@ -22,7 +22,6 @@ spec:
       {{- include "app.podSecurityContext" . | nindent 6 }}
       initContainers:
         {{- include "app.waitForPostgres" . | nindent 8 }}
-        {{- include "app.waitForBack" . | nindent 8 }}
       containers:
       - name: {{ .Values.app.name }}
         image: "{{ .Values.app.image }}"

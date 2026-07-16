@@ -34,7 +34,7 @@ spec:
         command:
           - sh
           - -c
-          - until nc -z kafka {{ .Values.kafka.port }}; do echo waiting for kafka; sleep 2; done
+          - until nc -z kafka.kafka.svc.cluster.local {{ .Values.kafka.port }}; do echo waiting for kafka; sleep 2; done
       containers:
       - name: kafka-topics
         image: {{ .Values.kafka.image }}
@@ -55,7 +55,7 @@ spec:
         - -c
         - |
           /opt/kafka/bin/kafka-topics.sh \
-            --bootstrap-server kafka:{{ .Values.kafka.port }} \
+            --bootstrap-server kafka.kafka.svc.cluster.local:{{ .Values.kafka.port }} \
             --create \
             --topic {{ .Values.topics.name }} \
             --partitions {{ .Values.topics.partitions }} \

@@ -1,4 +1,3 @@
-# helm/front/templates/tls-secret.yaml
 {{- if .Values.ingress.tls.enabled }}
 apiVersion: v1
 kind: Secret
