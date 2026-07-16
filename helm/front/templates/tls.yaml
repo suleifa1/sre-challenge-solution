@@ -6,7 +6,6 @@ metadata:
   name: {{ .Values.ingress.tls.tlsSecret }}
   namespace: {{ .Values.namespace }}
 type: kubernetes.io/tls
-type: kubernetes.io/tls
 stringData:
   tls.crt: {{ required "ingress.tls.cert is required" .Values.ingress.tls.cert | quote }}
   tls.key: {{ required "ingress.tls.key is required" .Values.ingress.tls.key | quote }}
