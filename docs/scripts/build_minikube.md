@@ -1,4 +1,8 @@
-# build.sh - Docker Image Building
+# build_minikube.sh - Local Minikube Image Building
+
+> ⚠️ This script builds images **directly into Minikube's Docker daemon** using `imagePullPolicy: Never`.
+> Images are only available within this Minikube instance and cannot be pushed to external registries.
+> For production deployment, see [Production Adaptation](../README.md#production-adaptation).
 
 ## Description
 

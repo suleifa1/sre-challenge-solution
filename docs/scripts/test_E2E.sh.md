@@ -2,14 +2,16 @@
 
 ## Description
 
-The script performs comprehensive testing of the deployed system functionality after running `deploy-helm.sh`. It checks the availability of all components, correctness of interactions between services, and data processing integrity.
+Runs automated end-to-end tests verifying the full data pipeline:
+`Front → Kafka → Back → PostgreSQL → Reader`
+
+Uses temporary port-forwards that are automatically cleaned up on exit via `trap`.
 
 ## Prerequisites
 
-- All components deployed (see deploy-helm.sh)
-- kubectl installed and configured
-- curl installed in the system
-- Port-forwards established for service access (or hosts configured)
+- All components deployed (`./scripts/deploy-helm.sh`)
+- kubectl configured
+- curl installed
 
 ## Usage
 
@@ -19,106 +21,60 @@ The script performs comprehensive testing of the deployed system functionality a
 
 ## Test Scenarios
 
-### 1. Service Availability Check
+| Step | Check | Expected |
+| --- | --- | --- |
+| 1 | Front management `/health` | `UP` |
+| 2 | Reader management `/health` | `UP` |
+| 3 | Kafka topic `testCommand` exists | topic listed |
+| 4 | POST command via Front API | 200 OK |
+| 5 | Data appears in Reader API | `message` field present |
 
-**Front:**
-- HTTP 200 check on `/swagger-ui.html`
-- Management endpoint check `/health`
+## Port Forwards
 
-**Back:**
-- HTTP 200 check on `/swagger-ui.html`
-- Management endpoint check `/health`
+The script temporarily opens four port-forwards:
 
-**Reader:**
-- HTTP 200 check on `/swagger-ui.html`
-- Management endpoint check `/health`
+| Local port | Target | Purpose |
+| --- | --- | --- |
+| 44433 | Front :8081 | Health check |
+| 44434 | Reader :8081 | Health check |
+| 44435 | Front :8080 | API calls |
+| 44436 | Reader :8084 | API calls |
 
-### 2. Kubernetes Resources Check
+All port-forwards are terminated automatically on script exit.
+
+## Exit Codes
+
+- `0` — all tests passed
+- `1` — at least one test failed (error output shown)
+
+## Persistence Verification
+
+To verify data survives Kafka and PostgreSQL restarts:
 
 ```bash
-# Status of all pods
+kubectl rollout restart statefulset/kafka -n kafka
+kubectl rollout restart statefulset/postgresql -n postgres
+kubectl rollout status statefulset/kafka -n kafka --timeout=120s
+kubectl rollout status statefulset/postgresql -n postgres --timeout=120s
+
+./scripts/test_E2E.sh
+```
+
+## Debugging
+
+```bash
+# Pod status
 kubectl get pods -A
 
-# Status of services
-kubectl get svc -A
+# Back logs
+kubectl logs -n demo-back deployment/back
 
-# Ingress check
-kubectl get ingress -A
+# Kafka topic details
+kubectl exec -n kafka statefulset/kafka -- \
+  /opt/kafka/bin/kafka-topics.sh \
+  --bootstrap-server localhost:9092 \
+  --describe --topic testCommand
+
+# NetworkPolicy status
+kubectl get networkpolicy -A
 ```
-
-### 3. Functional Testing
-
-**Send command through Front:**
-```bash
-curl -X POST http://127.0.0.1:8080/api/v1/command \
-  -H "Content-Type: application/json" \
-  -d '{
-    "message": "test message",
-    "loadFront": 100,
-    "loadBack": 100
-  }'
-```
-
-**Verify data persistence in Reader:**
-```bash
-curl http://127.0.0.1:8084/api/v1/testEntity
-```
-
-**Verify Kafka processing:**
-- Check `testCommand` topic presence
-- Verify message processing by Back
-- Verify database writes
-
-## Expected Results
-
-| Check | Expected Result |
-|-------|-----------------|
-| HTTP 200 on Front/Back/Reader | Services are accessible |
-| Health endpoints return UP | Applications are healthy |
-| POST to Front is accepted | API is functional |
-| Data in Reader matches sent data | Data pipeline is working |
-| Kafka topic exists | Messages are being processed |
-
-## Debugging on Errors
-
-### Service Unavailable
-
-```bash
-# Check port-forward
-kubectl port-forward -n demo-front svc/front 8080:8080
-
-# Check pod
-kubectl describe pod -n demo-front <pod-name>
-
-# Check network policies (if present)
-kubectl get networkpolicies -A
-```
-
-### Data Not Reaching Reader
-
-```bash
-# Check Back logs
-kubectl logs -n demo-back -l app=back | grep -i error
-
-# Check Kafka
-kubectl exec -n kafka <pod-name> -- /opt/kafka/bin/kafka-topics.sh \
-  --list --bootstrap-server localhost:9092
-
-# Check database
-kubectl exec -n postgres <pod-name> -- psql -U postgres -l
-```
-
-### Health Endpoints Return Errors
-
-```bash
-# Get full health information
-curl http://127.0.0.1:8081/health -v
-
-# Check dependencies
-curl http://127.0.0.1:8081/health/liveness
-curl http://127.0.0.1:8081/health/readiness
-```
-
-## Test Results
-
-After successful execution of all tests, the system is considered ready for use.

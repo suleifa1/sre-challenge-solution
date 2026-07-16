@@ -13,7 +13,7 @@ helm/
 └── reader/                      (namespace: demo-reader)
 ```
 
-Each chart contains standard K8s resources: Deployment, Service, ConfigMap, Secret, Ingress (where applicable).
+Each chart contains standard K8s resources: Deployment/StatefulSet, Service, ConfigMap, Secret, NetworkPolicy, Ingress (where applicable).
 
 ## Component Versions
 
@@ -30,8 +30,8 @@ The following versions are used in this solution:
 | Spring Boot | 3.5.6 |
 | Kotlin | 1.9.25 |
 | PostgreSQL | 16 |
-| Apache Kafka | 3.7.0 |
-| IBM Semeru Runtime JRE | 21 |
+| Apache Kafka | 3.7.0 (KRaft mode) |
+| IBM Semeru Runtime JRE | open-21.0.11.0-jre-jammy |
 
 ### Architecture Rationale
 
@@ -74,83 +74,104 @@ The `--wait` flag is not required, as init containers ensure proper ordering wit
 
 Dockerfiles use two-stage builds (multi-stage build):
 - **Stage 1**: Gradle 8.5 + JDK 21 (compilation and JAR build)
-- **Stage 2**: IBM Semeru Runtime JRE 21 (application runtime)
+- **Stage 2**: IBM Semeru Runtime JRE `open-21.0.11.0-jre-jammy` (pinned tag)
 
-Resulting images contain only runtime without source code and build dependencies.
+Images run as non-root user (`appuser`, UID 1000) and contain only runtime without source code and build dependencies.
+
+## Security
+
+- **Non-root containers**: all pods run as UID 1000 (`runAsNonRoot: true`)
+- **Dropped capabilities**: `allowPrivilegeEscalation: false`, all Linux capabilities dropped
+- **Secrets**: DB credentials passed via `--set` at deploy time, never stored in git
+- **TLS**: HTTPS termination at Ingress with auto-generated self-signed certificates
+- **NetworkPolicy**: ingress-only restrictions per component (requires Calico CNI: `minikube start --cni=calico`)
+
+## Persistence
+
+PostgreSQL and Kafka run as **StatefulSet** with **PersistentVolumeClaims** — data survives pod restarts and rolling upgrades.
 
 ## Deployment
-
 ### Local Deployment (Minikube)
 
-1. Switch Docker context to Minikube:
-   ```bash
-   eval $(minikube docker-env)
-   ```
+**Prerequisites:**
 
-2. Build Docker images:
-   ```bash
-   ./scripts/build.sh
-   ```
-   The script switches Docker to Minikube and builds Front, Back, Reader images directly in Minikube (without external registry).
+```bash
+minikube start --cni=calico
+minikube addons enable ingress
+minikube addons enable storage-provisioner
+minikube addons enable default-storageclass
+```
 
-3. Deploy Helm charts:
+**Required environment variables:**
+
+```bash
+export DB_USERNAME=postgres
+export DB_PASSWORD=your_password
+```
+
+> For deployment to other Kubernetes environments (EKS, GKE, AKS, bare-metal) see [docs/deploying-to-other-environments.md](docs/deploying-to-other-environments.md)
+
+1. Build Docker images:
+   ```bash
+   ./scripts/build_minikube.sh
+   ```
+   Builds Front, Back, Reader images directly in Minikube (no external registry required).
+
+2. Deploy Helm charts:
    ```bash
    ./scripts/deploy-helm.sh
    ```
-   The script executes `helm upgrade --install` for each chart in the specified order (idempotent).
+   Lints charts, generates TLS certificates, deploys all components in correct order.
 
-4. Verify status:
+3. Verify status:
    ```bash
    kubectl get pods -A
-   kubectl get svc -A
+   ./scripts/test_E2E.sh
    ```
 
 ### Production Adaptation
 
-Recommended set of changes for deployment in production environment:
+Recommended changes for production deployment:
 
-1. **Container registry**: use Docker Hub, ECR, GitHub Container Registry, or private registry
-2. **ImagePullPolicy**: change from `Never` to `IfNotPresent` in `helm/*/values.yaml`
-3. **Authentication**: add `imagePullSecrets` to Deployment if necessary
-4. **CI/CD pipeline**: integrate image building and pushing to registry
-5. **Network access**: Ingress NGINX is used for local development (built into Minikube). Note: Ingress NGINX was retired by SIG Network in March 2026 — migration to Gateway API (HTTPRoute) is recommended for production.
+1. **Container registry** — use Docker Hub, ECR, GCR or private registry
+2. **Image** — update `app.image` in `helm/*/values.yaml`
+3. **ImagePullPolicy** — change from `Never` to `IfNotPresent`
+4. **imagePullSecrets** — add registry credentials if needed:
+   ```yaml
+   app:
+     imagePullSecrets:
+       - name: registry-credentials
+   ```
+5. **Secrets** — use Sealed Secrets or External Secrets Operator instead of `--set`
+6. **NetworkPolicy** — already implemented, requires Calico or Cilium CNI
+7. **TLS** — replace self-signed certs with cert-manager + Let's Encrypt
+8. **Network access** — Ingress NGINX was retired by SIG Network in March 2026, migration to Gateway API (HTTPRoute) is recommended for production
 
 ## Network Access
 
 **Ingress:**
-Front and Reader use Nginx Ingress (built-in to Minikube) for external access.
-
-**Configuration:**
-```yaml
-spec:
-  rules:
-  - host: front.local
-    http:
-      paths:
-      - path: /
-        backend:
-          service:
-            name: front
-            port:
-              number: 8080
-```
+Front and Reader use Nginx Ingress (built-in to Minikube) for external access with TLS termination.
 
 **Access:**
 - Add to `/etc/hosts`: `127.0.0.1 front.local reader.local`
-- Or use port-forward: `kubectl port-forward -n demo-front svc/front 8080:8080`
-
+- Front: `https://front.local`
+- Reader: `https://reader.local`
+- Or use port-forward via Ingress controller:
+  ```bash
+  kubectl port-forward -n ingress-nginx svc/ingress-nginx-controller 8443:443
+  curl -k https://localhost:8443/health -H "Host: front.local"
+  ```
 
 ## Helper Scripts
 
 The following scripts are provided for deployment and testing automation:
 
-- **build.sh** — switch to Minikube Docker and build images
+- **build_minikube.sh** — build images in Minikube (local only, no registry)
 - **deploy-helm.sh** — deploy all 5 charts in proper order
 - **teardown.sh** — remove all deployed resources
 - **test_E2E.sh** — end-to-end tests of the application
 
 For detailed information on each script, see [docs/scripts/](docs/scripts/)
-
 
 ## Deployment Idempotency
 
@@ -179,7 +200,6 @@ To add HPA, the following is required:
 
 1. **Metrics Server** in the cluster:
    ```bash
-   # For Minikube
    minikube addons enable metrics-server
    ```
 

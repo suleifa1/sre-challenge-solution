@@ -1,54 +1,61 @@
 # Scripts Documentation
 
-This section contains documentation for each deployment and testing script.
-
 ## Contents
 
 ### Deployment and Management
 
 | Script | Description |
-|--------|---------|
-| [build.sh](build.sh.md) | Build Docker images in Minikube |
+| --- | --- |
+| [build_minikube.sh](build.sh.md) | Build Docker images directly in Minikube (local only) |
 | [deploy-helm.sh](deploy-helm.sh.md) | Deploy all Helm charts |
 | [teardown.sh](teardown.sh.md) | Remove all deployed resources |
 
 ### Testing
 
 | Script | Description |
-|--------|---------|
+| --- | --- |
 | [test_E2E.sh](test_E2E.sh.md) | End-to-End testing of the system |
 
 ## Execution Order
 
 ### Initial Deployment
 
-1. **build.sh** — build Docker images
-2. **deploy-helm.sh** — deploy system
-3. **test_E2E.sh** — verify functionality
+```bash
+# 1. Start Minikube with Calico (required for NetworkPolicy)
+minikube start --cni=calico
+minikube addons enable ingress
+
+# 2. Build images
+./scripts/build_minikube.sh
+
+# 3. Deploy
+export DB_USERNAME=postgres
+export DB_PASSWORD=your_password
+./scripts/deploy-helm.sh
+
+# 4. Verify
+./scripts/test_E2E.sh
+```
 
 ### Re-deployment
 
 ```bash
-./scripts/deploy-helm.sh  # Updates existing resources (idempotent)
-./scripts/test_E2E.sh     # Verify functionality
+./scripts/deploy-helm.sh  # idempotent
+./scripts/test_E2E.sh
 ```
 
 ### Cleanup
 
 ```bash
-./scripts/teardown.sh  # Remove all resources
+./scripts/teardown.sh
 ```
 
 ## Requirements
 
-- Minikube (for local development)
-- Kubernetes 1.19+
+- Minikube with Calico CNI (`minikube start --cni=calico`)
+- Kubernetes 1.21+
 - Helm 3.x
 - kubectl
 - curl
-- Docker (for Minikube)
-
-## Troubleshooting
-
-See the "Possible errors" section in documentation for each script.
-
+- Docker
+- openssl (TLS certificate generation)
