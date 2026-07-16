@@ -12,7 +12,7 @@ COPY app/build.gradle app/build.gradle
 COPY app/common app/common
 COPY app/reader app/reader
 
-RUN ./gradlew :app:reader:build -x test --no-daemon
+RUN ./gradlew :app:reader:build --no-daemon
 
 # ==========STAGE 2: Run the app ==============
 

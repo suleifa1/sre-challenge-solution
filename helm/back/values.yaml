@@ -6,6 +6,7 @@ app:
   managementPort: 8081
   image: back:0.1.0
   imagePullPolicy: Never
+  imagePullSecrets: []
   replicaCount: 1
 
   resources:

@@ -6,6 +6,7 @@ app:
   managementPort: 8081
   image: front:0.1.0
   imagePullPolicy: Never
+  imagePullSecrets: []
   replicaCount: 1
 
   resources:
@@ -25,3 +26,8 @@ ingress:
   enabled: true
   className: nginx
   hostname: front.local
+  tls:
+    enabled: true
+    tlsSecret: front-tls
+    cert: ""
+    key: ""

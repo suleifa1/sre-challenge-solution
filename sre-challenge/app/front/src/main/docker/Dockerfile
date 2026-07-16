@@ -12,7 +12,7 @@ COPY app/build.gradle app/build.gradle
 COPY app/common app/common
 COPY app/front app/front
 
-RUN ./gradlew :app:front:build -x test --no-daemon
+RUN ./gradlew :app:front:build --no-daemon
 
 # ==========STAGE 2: Run the app ==============
 

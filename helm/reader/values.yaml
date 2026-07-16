@@ -6,6 +6,7 @@ app:
   managementPort: 8081
   image: reader:0.1.0
   imagePullPolicy: Never
+  imagePullSecrets: []
   replicaCount: 1
 
   resources:
@@ -33,3 +34,9 @@ ingress:
   enabled: true
   className: nginx
   hostname: reader.local
+  tls:
+    enabled: true
+    tlsSecret: reader-tls
+    cert: ""
+    key: ""
+
