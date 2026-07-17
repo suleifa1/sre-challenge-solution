@@ -6,7 +6,7 @@ metadata:
   labels:
     app: kafka
 spec:
-  type: ClusterIP
+  clusterIP: None
   ports:
   - port: {{ .Values.kafka.port }}
     targetPort: kafka

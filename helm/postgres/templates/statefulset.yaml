@@ -56,22 +56,32 @@ spec:
           limits:
             cpu: {{ .Values.postgres.resources.limits.cpu }}
             memory: {{ .Values.postgres.resources.limits.memory }}
+        startupProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - pg_isready -U {{ .Values.postgres.auth.username }}
+          failureThreshold: 30
+          periodSeconds: 10
+
         livenessProbe:
           exec:
             command:
             - /bin/sh
             - -c
             - pg_isready -U {{ .Values.postgres.auth.username }}
-          initialDelaySeconds: 30
           periodSeconds: 10
+          failureThreshold: 3
+
         readinessProbe:
           exec:
             command:
             - /bin/sh
             - -c
             - pg_isready -U {{ .Values.postgres.auth.username }}
-          initialDelaySeconds: 10
           periodSeconds: 5
+          failureThreshold: 3
   volumeClaimTemplates:
   - metadata:
       name: postgres-data

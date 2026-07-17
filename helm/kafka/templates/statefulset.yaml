@@ -48,16 +48,21 @@ spec:
           limits:
             cpu: {{ .Values.kafka.resources.limits.cpu }}
             memory: {{ .Values.kafka.resources.limits.memory }}
+        startupProbe:
+          tcpSocket:
+            port: {{ .Values.kafka.port }}
+          failureThreshold: 30
+          periodSeconds: 10
         livenessProbe:
           tcpSocket:
             port: {{ .Values.kafka.port }}
-          initialDelaySeconds: 30
           periodSeconds: 10
+          failureThreshold: 3
         readinessProbe:
           tcpSocket:
             port: {{ .Values.kafka.port }}
-          initialDelaySeconds: 10
           periodSeconds: 5
+          failureThreshold: 3
       volumes:
       - name: tmp
         emptyDir: {}
