@@ -47,4 +47,28 @@ spec:
       protocol: UDP
     - port: 53
       protocol: TCP
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: back-ingress
+  namespace: {{ .Values.namespace }}
+spec:
+  podSelector:
+    matchLabels:
+      app: back
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: {{ .Values.dependencies.reader.namespace }}
+      podSelector:
+        matchLabels:
+          app: reader
+    ports:
+    - port: {{ .Values.app.managementPort }}
+    
 {{- end }}

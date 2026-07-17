@@ -26,6 +26,10 @@ dependencies:
   postgres:
     host: postgresql.postgres.svc.cluster.local
     port: 5432
+  back:
+    host: back.demo-back.svc.cluster.local
+    managementPort: 8081
+    namespace: demo-back
 
 networkPolicy:
   enabled: true

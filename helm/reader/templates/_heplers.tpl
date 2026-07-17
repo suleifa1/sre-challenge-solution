@@ -52,5 +52,10 @@ securityContext:
   command:
     - sh
     - -c
-    - until nc -z {{ .Values.dependencies.back.host }} {{ .Values.dependencies.back.port }}; do echo waiting for back; sleep 2; done
+    - |
+      until wget -qO- http://{{ .Values.dependencies.back.host }}:{{ .Values.dependencies.back.managementPort }}/health 2>/dev/null | grep -q '"status":"UP"'; do
+        echo "Waiting for Back to be healthy..."
+        sleep 5
+      done
+      echo "Back is healthy"
 {{- end }}

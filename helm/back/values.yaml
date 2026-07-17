@@ -32,3 +32,5 @@ dependencies:
   kafka:
     host: kafka.kafka.svc.cluster.local
     port: 9092
+  reader:
+    namespace: demo-reader
